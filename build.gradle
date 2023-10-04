@@ -1,0 +1,17 @@
+plugins {
+    id 'groovy'
+
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.codehaus.groovy:groovy-all:2.5.14'
+    implementation 'io.github.http-builder-ng:http-builder-ng-core:1.0.4'
+    testImplementation 'org.spockframework:spock-core:1.2-groovy-2.5'
+}
+
+mainClassName = 'ANSWebCrawler.App'
