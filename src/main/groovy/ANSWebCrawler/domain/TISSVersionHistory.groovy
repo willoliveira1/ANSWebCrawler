@@ -1,7 +1,6 @@
 package ANSWebCrawler.domain
 
 import groovy.transform.TupleConstructor
-
 import java.time.LocalDate
 
 @TupleConstructor
