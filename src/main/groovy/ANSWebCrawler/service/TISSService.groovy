@@ -1,42 +1,16 @@
 package ANSWebCrawler.service
 
-import ANSWebCrawler.domain.TISS
-
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import groovyx.net.http.optional.Download
-import org.jsoup.Jsoup
+import ANSWebCrawler.domain.TISSVersionHistory
+import ANSWebCrawler.util.FileHandler
+import ANSWebCrawler.util.Parameters
+import ANSWebCrawler.util.Paths
+import ANSWebCrawler.util.SearchTexts
+import ANSWebCrawler.util.UrlHandler
 import org.jsoup.nodes.Document
 import java.time.format.DateTimeFormatter
 import java.time.LocalDate
 
-import static groovyx.net.http.HttpBuilder.configure
-
 class TISSService {
-
-    Document populateDocument(String url) {
-        return Jsoup.connect(url).get()
-    }
-
-    void downloadFile(String url, String folder) {
-        configure {
-            request.uri = url
-        }.get {
-            Download.toFile(
-                    delegate,
-                    new File("./Downloads/${folder}/${url.split("/").last()}"))
-        }
-    }
-
-    void writeFile(List<TISS> versionHistory) {
-        try {
-            String filePath = "./src/main/resources/versionHistory.json"
-            Gson gson = new GsonBuilder().setPrettyPrinting().create()
-            gson.toJson(versionHistory, new FileWriter(filePath))
-        } catch (IOException e) {
-            e.printStackTrace()
-        }
-    }
 
     void getTISSFiles() {
         getCommunicationComponentFile()
@@ -48,56 +22,56 @@ class TISSService {
     }
 
     Document getTISSContent() {
-        String url = "https://www.gov.br/ans/pt-br"
-        Document doc = populateDocument(url)
+        String url = Paths.URL_PATH
+        Document document = FileHandler.populateDocument(url)
 
-        doc.getElementsByTag("img").each {img ->
-            if (img.attr("alt").equals("Espaço do Prestador")) {
+        document.getElementsByTag("img").each {img ->
+            if (img.attr("alt").equals(SearchTexts.PROVIDER_SPACE)) {
                 url = img.parent().attr("href")
-                doc = populateDocument(url)
+                document = FileHandler.populateDocument(url)
             }
         }
 
-        doc.getElementsByTag("a").each {span ->
-            if (span.text().equals("TISS - Padrão para Troca de Informação de Saúde Suplementar")) {
+        document.getElementsByTag("a").each {span ->
+            if (span.text().equals(SearchTexts.STANDARD_EXCHANGE)) {
                 url = span.attr("href")
-                doc = populateDocument(url)
+                document = FileHandler.populateDocument(url)
             }
         }
 
-        return doc
+        return document
     }
 
     Document getActualTISSContent() {
         String url = ""
-        Document doc = getTISSContent()
+        Document document = getTISSContent()
 
-        doc.getElementsByTag("h2").each {h2 ->
-            if (h2.text().contains("Padrão TISS – Versão")) {
+        document.getElementsByTag("h2").each {h2 ->
+            if (h2.text().contains(SearchTexts.STANDARD_VERSION)) {
                 url = h2.nextElementSibling()
                         .firstElementChild()
                         .attr("href")
-                doc = populateDocument(url)
+                document = FileHandler.populateDocument(url)
             }
         }
 
-        return doc
+        return document
     }
 
     void getErrorTableFile() {
         String url = ""
-        Document doc = getTISSContent()
+        Document document = getTISSContent()
 
-        doc.getElementsByTag("h2").each {h2 ->
-            if (h2.text().contains("Padrão TISS – Tabelas Relacionadas")) {
+        document.getElementsByTag("h2").each {h2 ->
+            if (h2.text().contains(SearchTexts.RELATED_TABLES)) {
                 url = h2.nextElementSibling()
                         .firstElementChild()
                         .attr("href")
-                doc = populateDocument(url)
+                document = FileHandler.populateDocument(url)
             }
         }
 
-        doc.getElementsByTag("h2").each {h2 ->
+        document.getElementsByTag("h2").each {h2 ->
             if (h2.text().equals("Tabela de erros no envio para a ANS")) {
                 url = h2.nextElementSibling()
                         .firstElementChild()
@@ -105,105 +79,61 @@ class TISSService {
             }
         }
 
-        downloadFile(url, "Tabela de Erros no Envio")
+        FileHandler.downloadFile(url, SearchTexts.SENDING_ERROR_TABLE)
     }
 
     void getCommunicationComponentFile() {
-        String url = ""
-        Document doc = getActualTISSContent()
-
-        doc.getElementsByTag("td").each {td ->
-            if (td.text().equals("Componente de Comunicação")) {
-                url = td.lastElementSibling()
-                        .firstElementChild()
-                        .attr("href")
-            }
-        }
-
-        downloadFile(url, "Componente de Comunicacao")
+        Document document = this.getActualTISSContent()
+        String url = UrlHandler.populateUrlByEquals(document, SearchTexts.COMMUNICATION_COMPONENT)
+        FileHandler.downloadFile(url, SearchTexts.COMMUNICATION_COMPONENT)
     }
 
     void getOrganizationalComponentFile() {
-        String url = ""
-        Document doc = getActualTISSContent()
-
-        doc.getElementsByTag("td").each {td ->
-            if (td.text().equals("Componente Organizacional")) {
-                url = td.lastElementSibling()
-                        .firstElementChild()
-                        .attr("href")
-            }
-        }
-
-        downloadFile(url, "Componente Organizacional")
+        Document document = this.getActualTISSContent()
+        String url = UrlHandler.populateUrlByEquals(document, SearchTexts.ORGANIZATIONAL_COMPONENT)
+        FileHandler.downloadFile(url, SearchTexts.ORGANIZATIONAL_COMPONENT)
     }
 
     void getContentAndStructureComponentFile() {
-        String url = ""
-        Document doc = getActualTISSContent()
-
-        doc.getElementsByTag("td").each {td ->
-            if (td.text().equals("Componente de Conteúdo e Estrutura")) {
-                url = td.lastElementSibling()
-                        .firstElementChild()
-                        .attr("href")
-            }
-        }
-
-        downloadFile(url, "Componente de Conteúdo e Estrutura")
+        Document document = this.getActualTISSContent()
+        String url = UrlHandler.populateUrlByEquals(document, SearchTexts.CONTENT_COMPONENT)
+        FileHandler.downloadFile(url, SearchTexts.CONTENT_COMPONENT)
     }
 
     void getHealthConceptRepresentationComponentFile() {
-        String url = ""
-        Document doc = getActualTISSContent()
+        Document document = getActualTISSContent()
+        String url = UrlHandler.populateUrlByContainsTd(document, SearchTexts.HEALTH_CONCEPT_COMPONENT)
 
-        doc.getElementsByTag("td").each {td ->
-            if (td.text().contains("Componente de Conteúdo e Estrutura")) {
-                url = td.lastElementSibling()
-                        .firstElementChild()
-                        .attr("href")
-            }
-        }
-
-        downloadFile(url, "Componente de Representação de Conceitos em Saúde")
+        FileHandler.downloadFile(url, SearchTexts.HEALTH_CONCEPT_COMPONENT)
     }
 
     void getSecurityAndPrivacyComponentFile() {
-        String url = ""
-        Document doc = getActualTISSContent()
-
-        doc.getElementsByTag("td").each {td ->
-            if (td.text().equals("Componente de Segurança e Privacidade")) {
-                url = td.lastElementSibling()
-                        .firstElementChild()
-                        .attr("href")
-            }
-        }
-
-        downloadFile(url, "Componente de Segurança e Privacidade")
+        Document document = this.getActualTISSContent()
+        String url = UrlHandler.populateUrlByEquals(document, SearchTexts.SECURITY_COMPONENT)
+        FileHandler.downloadFile(url, SearchTexts.SECURITY_COMPONENT)
     }
 
     void getVersionHistoryFile() {
         String url = ""
-        Document doc = getTISSContent()
+        Document document = getTISSContent()
 
-        doc.getElementsByTag("h2").each {h2 ->
-            if (h2.text().contains("Padrão TISS – Histórico das versões")) {
+        document.getElementsByTag("h2").each {h2 ->
+            if (h2.text().contains(SearchTexts.VERSION_HISTORY_COMPONENT)) {
                 url = h2.nextElementSibling()
                         .firstElementChild()
                         .attr("href")
-                doc = populateDocument(url)
+                document = FileHandler.populateDocument(url)
             }
         }
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy")
-        LocalDate initialDate = LocalDate.parse("2016-01-01")
-        List<TISS> rows = new ArrayList<>()
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Parameters.DATE_TIME_FORMATTER)
+        LocalDate initialDate = LocalDate.parse(Parameters.INITIAL_DATE)
+        List<TISSVersionHistory> rows = new ArrayList<>()
 
-        if (doc != null) {
+        if (document != null) {
             int id = 1
 
-            doc.select('tr').drop(1).each {tr ->
+            document.select('tr').drop(1).each {tr ->
                 List<String> row = new ArrayList<>()
 
                 row.add(id)
@@ -215,15 +145,13 @@ class TISSService {
                 LocalDate beginningOfTerm = LocalDate.parse(row.get(3), formatter)
 
                 if (beginningOfTerm >= initialDate) {
-                    rows.add(new TISS(row.get(0) as int, row.get(1), publication, beginningOfTerm))
+                    rows.add(new TISSVersionHistory(row.get(0) as int, row.get(1), publication, beginningOfTerm))
                 }
                 id++
             }
         }
 
-        writeFile(rows)
+        FileHandler.writeFile(rows)
     }
-
-
 
 }

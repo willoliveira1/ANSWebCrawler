@@ -5,7 +5,7 @@ import groovy.transform.TupleConstructor
 import java.time.LocalDate
 
 @TupleConstructor
-class TISS {
+class TISSVersionHistory {
 
     int id
     String competency
