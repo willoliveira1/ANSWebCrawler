@@ -9,8 +9,8 @@ class UrlHandler {
         document.getElementsByTag("td").each {td ->
             if (td.text().equals(text)) {
                 url = td.lastElementSibling()
-                        .firstElementChild()
-                        .attr("href")
+                    .firstElementChild()
+                    .attr("href")
             }
         }
         return url
@@ -21,8 +21,8 @@ class UrlHandler {
         document.getElementsByTag("td").each {td ->
             if (td.text().contains(text)) {
                 url = td.lastElementSibling()
-                        .firstElementChild()
-                        .attr("href")
+                    .firstElementChild()
+                    .attr("href")
             }
         }
         return url

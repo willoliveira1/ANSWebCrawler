@@ -1,6 +1,6 @@
 package ANSWebCrawler.util
 
-import ANSWebCrawler.domain.TISSVersionHistory
+import ANSWebCrawler.domain.VersionHistory
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import groovyx.net.http.optional.Download
@@ -10,7 +10,7 @@ import static groovyx.net.http.HttpBuilder.configure
 
 class FileHandler {
 
-    static void writeFile(List<TISSVersionHistory> versionHistory) {
+    static void writeFile(List<VersionHistory> versionHistory) {
         try {
             String filePath = Paths.FILE_PATH
             Gson gson = new GsonBuilder().setPrettyPrinting().create()
@@ -29,12 +29,12 @@ class FileHandler {
             request.uri = url
         }.get {
             Download.toFile(
-                    delegate,
-                    new File(
-                            "${Paths.DOWNLOADS_PATH}/" +
-                            "${folder}/" +
-                            "${url.split("/").last()}"
-                    )
+                delegate,
+                new File(
+                    "${Paths.DOWNLOADS_PATH}/" +
+                    "${folder}/" +
+                    "${url.split("/").last()}"
+                )
             )
         }
     }
